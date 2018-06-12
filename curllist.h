@@ -16,7 +16,7 @@ namespace libcurlpp{
 	class CurlList
 	{
 	public:
-		CurlList();
+		CurlList(const std::list<std::string> list);
 		~CurlList();
 
 		/*

@@ -62,7 +62,7 @@ namespace libcurlpp{
 		{
 		public:
 			static void setopt(CURL* handle, std::string& value){
-				curl_easy_setopt(handle, OptionType, value.c_str());
+				curl_easy_setopt(handle, OptionType, (char*)value.c_str());
 			}
 		};
 
@@ -108,15 +108,60 @@ namespace libcurlpp{
 			ValueType _value;
 		};
 
+		//Specilize for CurlList
+		template <CURLoption OptionType>
+		class Option<OptionType, std::list<std::string>> : public OptionBase{
+		public:
+			static OptionBase* Create(const std::list<std::string>& value){
+				return dynamic_cast<OptionBase*>(new Option<OptionType, std::list<std::string>>(value));
+			}
+
+			void _destory(){
+				delete this;
+			}
+
+
+
+			CurlList GetValue() const{
+				return _value;
+			}
+
+			CURLoption GetOption() const override{
+				return _option;
+			}
+
+
+			bool Update(CURL* handle) override{
+				if (handle == NULL){
+					return false;
+				}
+
+				OptionSetter<OptionType, CurlList>::setopt(handle, _value);
+
+				return true;
+			}
+
+		private:
+			explicit Option(const std::list<std::string>& value) :_option(OptionType), _value(value){};
+			~Option(){};
+
+			CURLoption _option;
+			CurlList _value;
+		};
+
+
 		typedef Option<CURLOPT_URL, std::string> URL;  //目标URL
 		typedef Option<CURLOPT_PROXY, std::string> PROXY;      //代理地址 scheme://xx.xx.xx.xx:port
 		typedef Option<CURLOPT_PROXYUSERPWD, std::string> PROXYAUTH;//代理验证  user:passwd
 		typedef Option<CURLOPT_PROXYAUTH, unsigned long> PROXY_AUTH_TYPE;//代理认证类型 建议使用CURLAUTH_ANY
-		typedef Option<CURLOPT_HTTPHEADER, CurlList> HTTPHEADER; //Http header设置
-		typedef Option<CURLOPT_POSTFIELDS, char*> HTTPPOSTDATA; //POST数据，该选项会默认让curl CURLOPT_POST设置为1，若不采用CURLOPT_POSTFIELDSIZE指定char*长度，则libcurl使用strlen函数确认长度
+		typedef Option<CURLOPT_HTTPHEADER, std::list<std::string>> HTTPHEADER; //Http header设置
+		typedef Option<CURLOPT_POSTFIELDS, std::string> HTTPPOSTDATA; //POST数据，该选项会默认让curl CURLOPT_POST设置为1，若不采用CURLOPT_POSTFIELDSIZE指定char*长度，则libcurl使用strlen函数确认长度
 
 		typedef Option<CURLOPT_POSTFIELDSIZE, long> HTTPPOSTDATASIZE; //手动指定POSTDATA长度
 		typedef Option<CURLOPT_TIMEOUT, long> TIMEOUT; //超时设置 秒为单位
+
+		typedef Option<CURLOPT_SSL_VERIFYPEER, long> VERIFY_PEER; //是否验证服务端证书授权 0:不验证 1:验证 （默认为1）
+		typedef Option<CURLOPT_SSL_VERIFYHOST, long> VERIFY_HOST; //是否验证服务端身份与URL指定身份是否匹配 0:忽略验证 1:debug选项 不可用 2：验证 （默认2）
 
 
 	}

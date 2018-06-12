@@ -1,8 +1,13 @@
 #include "curllist.h"
 
+#include <algorithm>
 namespace libcurlpp{
-	CurlList::CurlList() :headers(NULL)
+	CurlList::CurlList(const std::list<std::string> list) :headers(NULL)
 	{
+		for each (const std::string& var in list)
+		{
+			Append(var);
+		}
 	}
 
 	CurlList::~CurlList(){
